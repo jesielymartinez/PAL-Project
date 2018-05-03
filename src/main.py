@@ -7,6 +7,7 @@ import time
 assetCount = -1
 assetArray = []
 background = None
+spritesArray = []
 
 
 class App(tk.Frame):
@@ -125,6 +126,68 @@ class Asset():
     def setPhoto(self, photo):
         self.photo = photo
 
+def createSprites(fileName, spriteWidth, spriteHeight, numberOfRows, numberOfColumns):
+    img = None
+    if isinstance(fileName, str):
+        try:
+            img = Image.open(fileName)
+            width = img.size[0]
+            height = img.size[1]
+
+            for i in range(1,numberOfRows):
+                for j in range(1,numberOfColumns):
+                    newSprite = Sprite(fileName + str(i) + str(j))
+                    newSprite.image = img.crop(
+                        ((i - 1)* spriteWidth, (j - 1)* spriteHeight, spriteWidth, spriteHeight)
+                     )
+                    spritesArray.append(newSprite)
+                    # global assetArray
+                    # assetArray.append(newSprite)
+        except FileNotFoundError:
+            print("File doesn't exist or couldn't be read:", fileName)
+    else:
+        print("Invalid Parameter", fileName)
+
+
+class Sprite:
+
+    def __init__(self, name):
+        self.name = name
+        self.image = None
+        self.posX = 0
+        self.posY = 0
+        self.photo = None
+        self.canvasID = None
+
+
+    def move(self, deltaX, deltaY):
+        self.posX = self.posX + deltaX
+        self.posY = self.posY + deltaY
+
+    def moveAbs(self, absX, absY):
+        self.posX = absX
+        self.posY = absY
+
+    def changeSpriteName(self, name):
+        self.name = name
+    def resizeSprite(self, newSizeX, newSizeY):
+        self.image = self.image.resize((newSizeX,newSizeY), Image.ANTIALIAS)
+    def resizeAssetMultiplier(self, multiplier):
+        self.image = self.image.resize((multiplier*self.image.size[0],
+                                        multiplier*self.image.size[1]),
+                                       Image.ANTIALIAS)
+    def setPhoto(self, photo):
+        self.photo = photo
+
+    def setIdentifier(self, id):
+        self.canvasID = id
+
+    def unload(self):
+        global spritesArray
+        spritesArray.remove(self)
+        self.image = None
+
+
 
 def makeCanvas():
     root = tk.Tk()
@@ -195,6 +258,14 @@ if __name__ == '__main__':
             ast = input("PAL CMD: Enter asset file name:")
             astName = input("PAL CMD: Enter name for the asset:")
             assetArray.append(Asset(str(ast), astName))
+        elif var == "create sprites":
+            sprt = input("PAL CMD: Enter Sprite file name:")
+            sprtWidth = input("PAL CMD: Enter Sprites width:")
+            sprtHeight = input("PAL CMD: Enter Sprite height:")
+            rows = input("PAL CMD: Enter number of rows:")
+            columns = input("PAL CMD: Enter number of columns:")
+            createSprites(sprt, int(sprtWidth), int(sprtHeight), int(rows), int(columns))
+
         elif var == "move":
             moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
             while (moveMode != "R") & (moveMode != "A"):
