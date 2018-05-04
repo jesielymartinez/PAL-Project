@@ -17,6 +17,8 @@ class App(tk.Frame):
         self.assets = []
         self.assetsLoaded = -1
         self.background = None
+        self.spritesLoaded = -1
+        self.sprites = []
 
         self.canvasView = tk.Canvas(self, height=200, width=200, bg="black"
                                     , highlightthickness=0, relief='ridge')
@@ -73,6 +75,16 @@ class App(tk.Frame):
                                                               anchor='nw'))
         self.resizeCanvas(background.centerX*2, background.centerY*2)
 
+    def loadSprite(self, sprite):
+        self.spritesLoaded = self.spritesLoaded + 1
+        self.sprites.append(sprite)
+
+        sprite.setPhoto(ImageTk.PhotoImage(sprite.spritesArray[sprite.selectedSprite]))
+        sprite.setIdentifier(self.canvasView.create_image(sprite.posX,
+                                                          sprite.posY,
+                                                         image=sprite.photo[sprite.selectedSprite],
+                                                         anchor='nw'))
+
 
 class Asset():
     def __init__(self, fileName, name):
@@ -100,11 +112,13 @@ class Asset():
             print("Invalid Parameter", fileName)
 
     def resizeAssetMultiplier(self, multiplier):
+        #Cambiar a dar resize al current sprite
         self.image = self.image.resize((multiplier*self.image.size[0],
                                         multiplier*self.image.size[1]),
                                        Image.ANTIALIAS)
 
     def resizeAsset(self, newSizeX, newSizeY):
+        #Cambiar a dar resize al current sprite
         self.image = self.image.resize((newSizeX,newSizeY), Image.ANTIALIAS)
 
     def move(self, deltaX, deltaY):
@@ -126,39 +140,43 @@ class Asset():
     def setPhoto(self, photo):
         self.photo = photo
 
-def createSprites(fileName, spriteWidth, spriteHeight, numberOfRows, numberOfColumns):
-    img = None
-    if isinstance(fileName, str):
-        try:
-            img = Image.open(fileName)
-            width = img.size[0]
-            height = img.size[1]
-
-            for i in range(1,numberOfRows):
-                for j in range(1,numberOfColumns):
-                    newSprite = Sprite(fileName + str(i) + str(j))
-                    newSprite.image = img.crop(
-                        ((i - 1)* spriteWidth, (j - 1)* spriteHeight, spriteWidth, spriteHeight)
-                     )
-                    spritesArray.append(newSprite)
-                    # global assetArray
-                    # assetArray.append(newSprite)
-        except FileNotFoundError:
-            print("File doesn't exist or couldn't be read:", fileName)
-    else:
-        print("Invalid Parameter", fileName)
-
-
 class Sprite:
 
-    def __init__(self, name):
+    def __init__(self, name, fileName, spriteWidth, spriteHeight, numberOfRows, numberOfColumns):
         self.name = name
+        self.fileName = fileName
         self.image = None
         self.posX = 0
         self.posY = 0
-        self.photo = None
-        self.canvasID = None
+        self.centerX = None
+        self.centerY = None
+        self.photo = []
+        self.canvasID = []
+        self.spritesArray = []
+        self.spriteWidth = spriteWidth
+        self.spriteHeight = spriteHeight
+        self.numberOfRows = numberOfRows
+        self.numberOfColumns = numberOfColumns
+        self.selectedSprite = 0
+        self.multiplier = 1
+        self.createSprites()
 
+    def createSprites(self):
+        if isinstance(self.fileName, str):
+            try:
+                self.image = Image.open(self.fileName)
+                for i in range(1, self.numberOfRows):
+                    for j in range(1, self.numberOfColumns):
+                        self.spritesArray.append(self.image.crop(
+                            ((i - 1) * self.spriteWidth, (j - 1) * self.spriteHeight,
+                             self.spriteWidth, self.spriteHeight)
+                        ))
+                        self.photo.append(None)
+                        self.canvasID.append(None)
+            except FileNotFoundError:
+                print("File doesn't exist or couldn't be read:", self.fileName)
+        else:
+            print("Invalid Parameter", self.fileName)
 
     def move(self, deltaX, deltaY):
         self.posX = self.posX + deltaX
@@ -170,24 +188,29 @@ class Sprite:
 
     def changeSpriteName(self, name):
         self.name = name
-    def resizeSprite(self, newSizeX, newSizeY):
-        self.image = self.image.resize((newSizeX,newSizeY), Image.ANTIALIAS)
-    def resizeAssetMultiplier(self, multiplier):
-        self.image = self.image.resize((multiplier*self.image.size[0],
-                                        multiplier*self.image.size[1]),
-                                       Image.ANTIALIAS)
+
+    def resizeSpriteMultiplier(self, multiplier):
+        self.multiplier = multiplier
+
     def setPhoto(self, photo):
-        self.photo = photo
+        self.photo[self.selectedSprite] = photo
 
     def setIdentifier(self, id):
-        self.canvasID = id
+        self.canvasID[self.selectedSprite] = id
 
     def unload(self):
         global spritesArray
         spritesArray.remove(self)
         self.image = None
 
+    def getCurrentSprite(self):
+        tempImage = self.spritesArray[self.selectedSprite]
+        return tempImage.resize((self.multiplier*tempImage.size[0],
+                                        self.multiplier*tempImage.size[1]),
+                                       Image.ANTIALIAS)
 
+    def changeSelectedSprite(self, index):
+        self.selectedSprite = index
 
 def makeCanvas():
     root = tk.Tk()
@@ -211,6 +234,9 @@ def makeCanvas():
     global assetArray
     for a in assetArray:
         app.loadAsset(a)
+    global spritesArray
+    for s in spritesArray:
+        app.loadSprite(s)
     root.lift()
     root.attributes('-topmost', True)
     root.after_idle(root.attributes, '-topmost', False)
@@ -244,6 +270,32 @@ def resizeAsset(assetName, newSizeX, newSizeY):
             a.resizeAsset(newSizeX, newSizeY)
             break
 
+def moveSprite(spriteName, deltaX, deltaY):
+    for s in spritesArray:
+        if (s.name == spriteName):
+            s.move(deltaX, deltaY)
+            break
+
+
+def moveSpriteAbs(spriteName, deltaX, deltaY):
+    for s in spritesArray:
+        if s.name == spriteName:
+            s.moveAbs(deltaX, deltaY)
+            break
+
+
+def resizeSpriteMultiplier(spriteName, multiplier):
+    for s in spritesArray:
+        if (s.name == spriteName):
+            s.resizeAssetMultiplier(multiplier)
+            break
+
+def changeSpriteState(spriteName,index):
+    for s in spritesArray:
+        if (s.name == spriteName):
+            s.changeSelectedSprite(index)
+            break
+
 
 if __name__ == '__main__':
     while True:
@@ -260,11 +312,37 @@ if __name__ == '__main__':
             assetArray.append(Asset(str(ast), astName))
         elif var == "create sprites":
             sprt = input("PAL CMD: Enter Sprite file name:")
+            sprtName = input("PAL CMD: Enter Sprite name:")
             sprtWidth = input("PAL CMD: Enter Sprites width:")
             sprtHeight = input("PAL CMD: Enter Sprite height:")
             rows = input("PAL CMD: Enter number of rows:")
             columns = input("PAL CMD: Enter number of columns:")
-            createSprites(sprt, int(sprtWidth), int(sprtHeight), int(rows), int(columns))
+            spritesArray.append(Sprite(sprtName,sprt, int(sprtWidth), int(sprtHeight), int(rows), int(columns)))
+
+        elif var == "change sprite state":
+            sprtName = input("PAL CMD: Enter name of the sprite:")
+            index = input("PAL CMD: Enter index to change on sprite:")
+            changeSpriteState(sprtName,int(index))
+
+        elif var == "move sprite":
+            moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
+            while (moveMode != "R") & (moveMode != "A"):
+                print("Invalid Option, only <R> and <A>")
+                moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
+            sprtName = input("PAL CMD: Enter name of the sprite:")
+
+            if moveMode == "R":
+                sprtDeltaX = input("PAL CMD: Enter delta X:")
+                sprtDeltaY = input("PAL CMD: Enter delta Y:")
+                moveSprite(sprtName, int(sprtDeltaX), int(sprtDeltaY))
+            else:
+                sprtAbsX = input("PAL CMD: Enter absolute X:")
+                sprtAbsY = input("PAL CMD: Enter absolute Y:")
+                moveSpriteAbs(sprtName, int(sprtAbsX), int(sprtAbsY))
+        elif var == "resize sprite":
+            sprtName = input("PAL CMD: Enter name of the sprite:")
+            multiplier = input("PAL CMD: Enter multiplier:")
+            resizeAssetMultiplier(sprtName, int(multiplier))
 
         elif var == "move":
             moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
