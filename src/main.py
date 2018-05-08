@@ -5,8 +5,6 @@ import pyscreenshot as ImageGrab
 from copy import deepcopy
 import imageio
 
-import time
-
 framesArray = []
 currentFrame = -1
 animationWidth = 500
@@ -29,34 +27,14 @@ class App(tk.Frame):
     def loadFrame(self, index):
         self.currentFrame = index
         self.canvasView = self.frames[index].getCanvas(self.parent)
-        self.canvasView.grid(row=0, column=0, columnspan=1, sticky='nsew')
+        self.canvasView.pack()
+        self.canvasView.update_idletasks()
 
     def getCurrentFrame(self):
         return self.frames[self.currentFrame]
 
-    # def save(self):
-    #     ImageGrab.grab(bbox=self.canvas()).save("out.jpg")
-    #     print('Screenshot of tkinter.Canvas saved in "out.jpg"')
-    #
-    # def canvas(self):
-    #     print('  def _canvas(self):')
-    #     print('self.cv.winfo_rootx() = ', self.canvasView.winfo_rootx())
-    #     print('self.cv.winfo_rooty() = ', self.canvasView.winfo_rooty())
-    #     print('self.cv.winfo_x() =', self.canvasView.winfo_x())
-    #     print('self.cv.winfo_y() =', self.canvasView.winfo_y())
-    #     print('self.cv.winfo_width() =', self.canvasView.winfo_width())
-    #     print('self.cv.winfo_height() =', self.canvasView.winfo_height())
-    #     x = self.canvasView.winfo_rootx() + self.canvasView.winfo_x()
-    #     y = self.canvasView.winfo_rooty() + self.canvasView.winfo_y()
-    #     x1 = x + self.canvasView.winfo_width()
-    #     y1 = y + self.canvasView.winfo_height()
-    #     box = (x, y, x1, y1)
-    #
-    #     print('box = ', box)
-    #     return box
 
-
-class Frame():
+class Frame:
     def __init__(self, width, height):
         self.assets = []
         self.assetsLoaded = -1
@@ -74,8 +52,6 @@ class Frame():
         self.loadBackground()
         self.loadSprites()
         self.loadAssets()
-        print("bye")
-
         return self.canvas
 
     def save(self, filename):
@@ -84,7 +60,6 @@ class Frame():
         x1 = x + self.canvas.winfo_width()
         y1 = y + self.canvas.winfo_height()
         box = (x, y, x1, y1)
-        print(box)
         ImageGrab.grab(bbox=box).save(filename+".jpg", format="JPEG")
         return filename+".jpg"
 
@@ -118,23 +93,19 @@ class Frame():
     def moveBackground(self, deltaX):
         self.background.move(deltaX, 0)
         if self.background.posX > 0:
-            print("first")
             self.background2.moveAbs(0, 0)
             self.background2.move(self.background.posX-self.background2.centerX*2, 0)
-        if self.background.posX+self.background.centerX*2 < self.width:
+        elif self.background.posX+self.background.centerX*2 < self.width:
             self.background2.moveAbs(0, 0)
             self.background2.move(self.background.posX+self.background.centerX*2, 0)
-        if self.background.posX <= -self.background.centerX*2:
-            print("hello")
-            temp = self.background
-            self.background = self.background2
-            self.background2 = temp
-        if self.background.posX >= self.background.centerX*4:
-            print("bye")
-            temp = self.background
-            self.background = self.background2
-            self.background2 = temp
-
+        if (self.background.posX <= -self.background.centerX*2) or (self.background.posX >= self.background.centerX*2):
+            self.background, self.background2 = self.background2, self.background
+            if self.background.posX > 0:
+                self.background2.moveAbs(0, 0)
+                self.background2.move(self.background.posX - self.background2.centerX * 2, 0)
+            elif self.background.posX + self.background.centerX * 2 < self.width:
+                self.background2.moveAbs(0, 0)
+                self.background2.move(self.background.posX + self.background.centerX * 2, 0)
 
     def loadBackground(self):
         if self.background is not None:
@@ -253,7 +224,7 @@ class Asset:
     def load(self, fileName):
         if isinstance(fileName, str):
             try:
-                self.image = Image.open(fileName)
+                self.image = Image.open(fileName).convert('RGBA')
                 self.centerX = self.image.size[0] // 2
                 self.centerY = self.image.size[1] // 2
             except FileNotFoundError:
@@ -329,11 +300,11 @@ class Sprite:
     def createSprites(self):
         if isinstance(self.fileName, str):
             try:
-                self.image = Image.open(self.fileName)
+                self.image = Image.open(self.fileName).convert('RGBA')
                 y = 0
-                while y <= self.image.size[1]:
+                while y < self.image.size[1]:
                     x = 0
-                    while x <= self.image.size[0]:
+                    while x + self.spriteWidth < self.image.size[0]:
                         box = (x, y, (x + self.spriteWidth), (y + self.spriteHeight))
                         self.spritesArray.append(self.image.crop(box))
                         x = x + self.spriteWidth
@@ -392,6 +363,7 @@ class Sprite:
         newSprite.posY = deepcopy(self.posY)
         newSprite.selectedSprite = deepcopy(self.selectedSprite)
         newSprite.multiplier = deepcopy(self.multiplier)
+        newSprite.angle = deepcopy(self.angle)
         return newSprite
 
 
@@ -401,15 +373,8 @@ def makeCanvas():
     root.resizable(False, False)
 
     app = App(root, framesArray[currentFrame])
-    app.grid(row=0, column=0, columnspan=1, sticky='nsew')
-
-    root.rowconfigure(0, weight=1)
-    root.columnconfigure(0, weight=1)
-    app.rowconfigure(0, weight=10)
-    app.rowconfigure(1, weight=1)
-    app.columnconfigure(0, weight=1)
-    app.columnconfigure(1, weight=1)
-    app.columnconfigure(2, weight=1)
+    app.pack()
+    app.update_idletasks()
 
     root.lift()
     root.attributes('-topmost', True)
@@ -417,7 +382,7 @@ def makeCanvas():
     app.mainloop()
 
 
-def save():
+def save(frameTime):
     count = 0
     frameImages = []
     for frame in framesArray:
@@ -426,15 +391,16 @@ def save():
         root.resizable(False, False)
 
         app = App(root, framesArray[count])
-        app.grid(row=0, column=0, columnspan=1, sticky='nsew')
+        app.pack()
+        app.update_idletasks()
 
-        root.after(1000, lambda: root.destroy())
-        root.after(100, saveFrameImage(frameImages, frame, count))
+        root.after(100, lambda: root.destroy())
+        root.after(50, saveFrameImage(frameImages, frame, count))
 
         app.mainloop()
 
         count = count + 1
-    imageio.mimsave('movie.gif', frameImages, duration=0.5)
+    imageio.mimsave('animation2.gif', frameImages, duration=frameTime)
 
 
 def saveFrameImage(frameImages, frame, count):
@@ -465,7 +431,10 @@ if __name__ == '__main__':
             createFrame()
         elif var == "change frame":
             frameIndex = input("PAL CMD: Enter frame index:")
-            currentFrame = int(frameIndex)
+            if (int(frameIndex) < 0) or (len(framesArray) - 1 < int(frameIndex)):
+                print("Invalid index")
+            else:
+                currentFrame = int(frameIndex)
         elif var == "background":
             ast = input("PAL CMD: Enter background file name:")
             framesArray[currentFrame].setBackground(ast)
@@ -548,7 +517,11 @@ if __name__ == '__main__':
             sprite = framesArray[currentFrame].getSprite(sprtName)
             if sprite is not None:
                 index = input("PAL CMD: Enter index to change on sprite:")
-                sprite.changeSelectedSprite(int(index))
+                if (int(index) < 0) or (len(sprite.spritesArray)-1 < int(index)):
+                    print("Invalid index")
+                else:
+                    print(len(sprite.spritesArray))
+                    sprite.changeSelectedSprite(int(index))
             else:
                 print("Sprite can't be found")
         elif var == "move sprite":
@@ -601,6 +574,7 @@ if __name__ == '__main__':
             else:
                 framesArray[currentFrame].unloadSprite(sprite)
         elif var == "save":
-            save()
+            frameTime = input("PAL CMD: Enter time in seconds between frames:")
+            save(float(frameTime))
         else:
             print("Invalid command")
