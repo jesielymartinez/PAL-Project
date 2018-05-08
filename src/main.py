@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import *
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageSequence
 import pyscreenshot as ImageGrab
 from copy import deepcopy
+import imageio
+
 import time
 
 framesArray = []
@@ -32,26 +34,26 @@ class App(tk.Frame):
     def getCurrentFrame(self):
         return self.frames[self.currentFrame]
 
-    def save(self):
-        ImageGrab.grab(bbox=self.canvas()).save("out.jpg")
-        print('Screenshot of tkinter.Canvas saved in "out.jpg"')
-
-    def canvas(self):
-        print('  def _canvas(self):')
-        print('self.cv.winfo_rootx() = ', self.canvasView.winfo_rootx())
-        print('self.cv.winfo_rooty() = ', self.canvasView.winfo_rooty())
-        print('self.cv.winfo_x() =', self.canvasView.winfo_x())
-        print('self.cv.winfo_y() =', self.canvasView.winfo_y())
-        print('self.cv.winfo_width() =', self.canvasView.winfo_width())
-        print('self.cv.winfo_height() =', self.canvasView.winfo_height())
-        x = self.canvasView.winfo_rootx() + self.canvasView.winfo_x()
-        y = self.canvasView.winfo_rooty() + self.canvasView.winfo_y()
-        x1 = x + self.canvasView.winfo_width()
-        y1 = y + self.canvasView.winfo_height()
-        box = (x, y, x1, y1)
-
-        print('box = ', box)
-        return box
+    # def save(self):
+    #     ImageGrab.grab(bbox=self.canvas()).save("out.jpg")
+    #     print('Screenshot of tkinter.Canvas saved in "out.jpg"')
+    #
+    # def canvas(self):
+    #     print('  def _canvas(self):')
+    #     print('self.cv.winfo_rootx() = ', self.canvasView.winfo_rootx())
+    #     print('self.cv.winfo_rooty() = ', self.canvasView.winfo_rooty())
+    #     print('self.cv.winfo_x() =', self.canvasView.winfo_x())
+    #     print('self.cv.winfo_y() =', self.canvasView.winfo_y())
+    #     print('self.cv.winfo_width() =', self.canvasView.winfo_width())
+    #     print('self.cv.winfo_height() =', self.canvasView.winfo_height())
+    #     x = self.canvasView.winfo_rootx() + self.canvasView.winfo_x()
+    #     y = self.canvasView.winfo_rooty() + self.canvasView.winfo_y()
+    #     x1 = x + self.canvasView.winfo_width()
+    #     y1 = y + self.canvasView.winfo_height()
+    #     box = (x, y, x1, y1)
+    #
+    #     print('box = ', box)
+    #     return box
 
 
 class Frame():
@@ -61,6 +63,7 @@ class Frame():
         self.sprites = []
         self.spritesLoaded = -1
         self.background = None
+        self.background2 = None
         self.width = width
         self.height = height
         self.canvas = None
@@ -71,7 +74,19 @@ class Frame():
         self.loadBackground()
         self.loadSprites()
         self.loadAssets()
+        print("bye")
+
         return self.canvas
+
+    def save(self, filename):
+        x = self.canvas.winfo_rootx() + self.canvas.winfo_x()
+        y = self.canvas.winfo_rooty() + self.canvas.winfo_y()
+        x1 = x + self.canvas.winfo_width()
+        y1 = y + self.canvas.winfo_height()
+        box = (x, y, x1, y1)
+        print(box)
+        ImageGrab.grab(bbox=box).save(filename+".jpg", format="JPEG")
+        return filename+".jpg"
 
     def addAsset(self, asset):
         self.assetsLoaded = self.assetsLoaded + 1
@@ -96,13 +111,41 @@ class Frame():
                                                           image=sprite.photo, anchor='nw'))
 
     def setBackground(self, background):
-        self.background = background
+        self.background = Asset(str(background), "background")
+        self.background2 = Asset(str(background), "background2")
+        self.background2.move(-self.background2.centerX*2, -self.background2.centerY*2)
+
+    def moveBackground(self, deltaX):
+        self.background.move(deltaX, 0)
+        if self.background.posX > 0:
+            print("first")
+            self.background2.moveAbs(0, 0)
+            self.background2.move(self.background.posX-self.background2.centerX*2, 0)
+        if self.background.posX+self.background.centerX*2 < self.width:
+            self.background2.moveAbs(0, 0)
+            self.background2.move(self.background.posX+self.background.centerX*2, 0)
+        if self.background.posX <= -self.background.centerX*2:
+            print("hello")
+            temp = self.background
+            self.background = self.background2
+            self.background2 = temp
+        if self.background.posX >= self.background.centerX*4:
+            print("bye")
+            temp = self.background
+            self.background = self.background2
+            self.background2 = temp
+
 
     def loadBackground(self):
         if self.background is not None:
             self.background.setPhoto(ImageTk.PhotoImage(self.background.image))
             self.background.setIdentifier(self.canvas.create_image(self.background.posX, self.background.posY,
                                                                    image=self.background.photo,
+                                                                   anchor='nw'))
+        if self.background2 is not None:
+            self.background2.setPhoto(ImageTk.PhotoImage(self.background2.image))
+            self.background2.setIdentifier(self.canvas.create_image(self.background2.posX, self.background2.posY,
+                                                                   image=self.background2.photo,
                                                                    anchor='nw'))
 
     def unloadAsset(self, asset):
@@ -188,12 +231,14 @@ class Frame():
         newFrame.assetsLoaded = deepcopy(self.assetsLoaded)
         newFrame.spritesLoaded = deepcopy(self.spritesLoaded)
         newFrame.background = deepcopy(self.background)
+        newFrame.background2 = deepcopy(self.background2)
         return newFrame
 
 
 class Asset:
     def __init__(self, fileName, name):
         self.name = name
+        self.filename = fileName
         self.image = None
         self.canvasID = None
         self.centerX = None
@@ -202,6 +247,7 @@ class Asset:
         self.posX = 0
         self.posY = 0
         self.photo = None
+        self.angle = 0
         self.load(fileName)
 
     def load(self, fileName):
@@ -231,6 +277,16 @@ class Asset:
     def moveAbs(self, absX, absY):
         self.posX = absX
         self.posY = absY
+
+    def rotate(self, angle):
+        self.angle = self.angle+angle
+        self.image = self.image.rotate(angle, expand=True, center=(self.centerX, self.centerY))
+
+    def rotateAbs(self, angle):
+        self.image = self.image.rotate(-self.angle, expand=True, center=(self.centerX, self.centerY))
+        self.image = self.image.rotate(angle, expand=True, center=(self.centerX, self.centerY))
+        self.angle = angle
+
 
     def unload(self):
         global assetArray
@@ -267,6 +323,7 @@ class Sprite:
         self.spriteHeight = spriteHeight
         self.selectedSprite = 0
         self.multiplier = 1
+        self.angle = 0
         self.createSprites()
 
     def createSprites(self):
@@ -301,6 +358,12 @@ class Sprite:
     def resizeSpriteMultiplier(self, multiplier):
         self.multiplier = multiplier
 
+    def rotate(self, angle):
+        self.angle = self.angle+angle
+
+    def rotateAbs(self, angle):
+        self.angle = angle
+
     def setPhoto(self, photo):
         self.photo = photo
 
@@ -314,9 +377,10 @@ class Sprite:
 
     def getCurrentSprite(self):
         tempImage = self.spritesArray[self.selectedSprite]
-        return tempImage.resize((self.multiplier * tempImage.size[0],
-                                 self.multiplier * tempImage.size[1]),
-                                Image.ANTIALIAS)
+        tempImage = tempImage.resize((self.multiplier * tempImage.size[0],
+                                      self.multiplier * tempImage.size[1]),
+                                     Image.ANTIALIAS)
+        return tempImage.rotate(self.angle, expand=True, center=(tempImage.size[0]//2, tempImage.size[1]//2))
 
     def changeSelectedSprite(self, index):
         self.selectedSprite = index
@@ -353,6 +417,30 @@ def makeCanvas():
     app.mainloop()
 
 
+def save():
+    count = 0
+    frameImages = []
+    for frame in framesArray:
+        root = tk.Tk()
+        root.title('PAL-Project')
+        root.resizable(False, False)
+
+        app = App(root, framesArray[count])
+        app.grid(row=0, column=0, columnspan=1, sticky='nsew')
+
+        root.after(1000, lambda: root.destroy())
+        root.after(100, saveFrameImage(frameImages, frame, count))
+
+        app.mainloop()
+
+        count = count + 1
+    imageio.mimsave('movie.gif', frameImages, duration=0.5)
+
+
+def saveFrameImage(frameImages, frame, count):
+    frameImages.append(imageio.imread(frame.save("frame" + str(count))))
+
+
 def createFrame():
     global currentFrame
     if currentFrame != -1:
@@ -364,8 +452,8 @@ def createFrame():
 
 
 if __name__ == '__main__':
-    animationWidth = input("PAL CMD: Enter the WIDTH of the Animation:")
-    animationHeight = input("PAL CMD: Enter the HEIGHT of the Animation:")
+    animationWidth = int(input("PAL CMD: Enter the WIDTH of the Animation:"))
+    animationHeight = int(input("PAL CMD: Enter the HEIGHT of the Animation:"))
     createFrame()
     while True:
         var = input("PAL CMD:")
@@ -380,7 +468,13 @@ if __name__ == '__main__':
             currentFrame = int(frameIndex)
         elif var == "background":
             ast = input("PAL CMD: Enter background file name:")
-            framesArray[currentFrame].setBackground(Asset(str(ast), "background"))
+            framesArray[currentFrame].setBackground(ast)
+        elif var == "move background":
+            if framesArray[currentFrame].background is None:
+                print("background isn't set")
+            else:
+                astDeltaX = input("PAL CMD: Enter delta X:")
+                framesArray[currentFrame].moveBackground(int(astDeltaX))
         elif var == "create asset":
             ast = input("PAL CMD: Enter asset file name:")
             astName = input("PAL CMD: Enter name for the asset:")
@@ -420,6 +514,22 @@ if __name__ == '__main__':
                     newSizeX = input("PAL CMD: Enter size in X:")
                     newSizeY = input("PAL CMD: Enter size in Y:")
                     asset.resizeAsset(int(newSizeX), int(newSizeY))
+        elif var == "rotate asset":
+            astName = input("PAL CMD: Enter name of the asset:")
+            asset = framesArray[currentFrame].getAsset(astName)
+            if asset is None:
+                print("Asset can't be found")
+            else:
+                moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
+                while (moveMode != "R") & (moveMode != "A"):
+                    print("Invalid Option, only <R> and <A>")
+                    moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
+                if moveMode == "R":
+                    angle = input("PAL CMD: Enter angle:")
+                    asset.rotate(int(angle))
+                else:
+                    angle = input("PAL CMD: Enter angle:")
+                    asset.rotateAbs(int(angle))
         elif var == "remove asset":
             astName = input("PAL CMD: Enter name of the asset:")
             asset = framesArray[currentFrame].getAsset(astName)
@@ -467,6 +577,22 @@ if __name__ == '__main__':
             else:
                 multiplier = input("PAL CMD: Enter multiplier:")
                 sprite.resizeSpriteMultiplier(int(multiplier))
+        elif var == "rotate sprite":
+            astName = input("PAL CMD: Enter name of the sprite:")
+            sprite = framesArray[currentFrame].getSprite(astName)
+            if sprite is None:
+                print("Asset can't be found")
+            else:
+                moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
+                while (moveMode != "R") & (moveMode != "A"):
+                    print("Invalid Option, only <R> and <A>")
+                    moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
+                if moveMode == "R":
+                    angle = input("PAL CMD: Enter angle:")
+                    sprite.rotate(int(angle))
+                else:
+                    angle = input("PAL CMD: Enter angle:")
+                    sprite.rotateAbs(int(angle))
         elif var == "remove sprite":
             sprtName = input("PAL CMD: Enter name of the sprite:")
             sprite = framesArray[currentFrame].getSprite(sprtName)
@@ -474,5 +600,7 @@ if __name__ == '__main__':
                 print("Asset can't be found")
             else:
                 framesArray[currentFrame].unloadSprite(sprite)
+        elif var == "save":
+            save()
         else:
             print("Invalid command")
