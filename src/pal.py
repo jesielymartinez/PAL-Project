@@ -1,14 +1,14 @@
 import tkinter as tk
-from tkinter import *
-from PIL import Image, ImageTk, ImageSequence
-import pyscreenshot as ImageGrab
+from PIL import Image, ImageTk, ImageGrab
 from copy import deepcopy
 import imageio
+import _thread
 
 framesArray = []
 currentFrame = -1
 animationWidth = 500
 animationHeight = 500
+frameImages = []
 
 
 class App(tk.Frame):
@@ -60,6 +60,7 @@ class Frame:
         x1 = x + self.canvas.winfo_width()
         y1 = y + self.canvas.winfo_height()
         box = (x, y, x1, y1)
+        # os.system("screencapture -R"+str(x)+str(y)+str(x1)+str(y1) + filename + ".jpg")
         ImageGrab.grab(bbox=box).save(filename+".jpg", format="JPEG")
         return filename+".jpg"
 
@@ -275,6 +276,7 @@ class Asset:
         newAsset.posX = deepcopy(self.posX)
         newAsset.posY = deepcopy(self.posY)
         newAsset.multiplier = deepcopy(self.multiplier)
+        newAsset.resizeAsset(self.image.size[0], self.image.size[1])
         return newAsset
 
 
@@ -304,7 +306,7 @@ class Sprite:
                 y = 0
                 while y < self.image.size[1]:
                     x = 0
-                    while x + self.spriteWidth < self.image.size[0]:
+                    while x < self.image.size[0]:
                         box = (x, y, (x + self.spriteWidth), (y + self.spriteHeight))
                         self.spritesArray.append(self.image.crop(box))
                         x = x + self.spriteWidth
@@ -384,7 +386,6 @@ def makeCanvas():
 
 def save(frameTime):
     count = 0
-    frameImages = []
     for frame in framesArray:
         root = tk.Tk()
         root.title('PAL-Project')
@@ -393,18 +394,19 @@ def save(frameTime):
         app = App(root, framesArray[count])
         app.pack()
         app.update_idletasks()
-
         root.after(100, lambda: root.destroy())
-        root.after(50, saveFrameImage(frameImages, frame, count))
+        root.after(50, saveFrameImage(frame, count))
 
         app.mainloop()
-
         count = count + 1
-    imageio.mimsave('animation2.gif', frameImages, duration=frameTime)
+
+    for x in range(0,count):
+        frameImages.append(imageio.imread("frame"+str(x)+".jpg"))
+    imageio.mimsave('animation.gif', frameImages, duration=frameTime)
 
 
-def saveFrameImage(frameImages, frame, count):
-    frameImages.append(imageio.imread(frame.save("frame" + str(count))))
+def saveFrameImage(frame, count):
+    _thread.start_new(frame.save, ("frame" + str(count),))
 
 
 def createFrame():
@@ -414,167 +416,5 @@ def createFrame():
     else:
         framesArray.append(Frame(animationWidth, animationHeight))
     currentFrame = currentFrame + 1
-    print("Created frame with index", currentFrame)
 
 
-if __name__ == '__main__':
-    animationWidth = int(input("PAL CMD: Enter the WIDTH of the Animation:"))
-    animationHeight = int(input("PAL CMD: Enter the HEIGHT of the Animation:"))
-    createFrame()
-    while True:
-        var = input("PAL CMD:")
-        if var == "show":
-            print("Displaying Frame with index", currentFrame)
-            print("Close Preview Window to continue imputing commands.")
-            makeCanvas()
-        elif var == "create frame":
-            createFrame()
-        elif var == "change frame":
-            frameIndex = input("PAL CMD: Enter frame index:")
-            if (int(frameIndex) < 0) or (len(framesArray) - 1 < int(frameIndex)):
-                print("Invalid index")
-            else:
-                currentFrame = int(frameIndex)
-        elif var == "background":
-            ast = input("PAL CMD: Enter background file name:")
-            framesArray[currentFrame].setBackground(ast)
-        elif var == "move background":
-            if framesArray[currentFrame].background is None:
-                print("background isn't set")
-            else:
-                astDeltaX = input("PAL CMD: Enter delta X:")
-                framesArray[currentFrame].moveBackground(int(astDeltaX))
-        elif var == "create asset":
-            ast = input("PAL CMD: Enter asset file name:")
-            astName = input("PAL CMD: Enter name for the asset:")
-            framesArray[currentFrame].addAsset(Asset(str(ast), astName))
-        elif var == "move asset":
-            astName = input("PAL CMD: Enter name of the asset:")
-            asset = framesArray[currentFrame].getAsset(astName)
-            if asset is None:
-                print("Asset can't be found")
-            else:
-                moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
-                while (moveMode != "R") & (moveMode != "A"):
-                    print("Invalid Option, only <R> and <A>")
-                    moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
-                if moveMode == "R":
-                    astDeltaX = input("PAL CMD: Enter delta X:")
-                    astDeltaY = input("PAL CMD: Enter delta Y:")
-                    asset.move(int(astDeltaX), int(astDeltaY))
-                else:
-                    astAbsX = input("PAL CMD: Enter absolute X:")
-                    astAbsY = input("PAL CMD: Enter absolute Y:")
-                    asset.moveAbs(int(astAbsX), int(astAbsY))
-        elif var == "resize asset":
-            astName = input("PAL CMD: Enter name of the asset:")
-            asset = framesArray[currentFrame].getAsset(astName)
-            if asset is None:
-                print("Asset can't be found")
-            else:
-                moveMode = input("PAL CMD: Resize by multiplier <M>  or values <V>")
-                while (moveMode != "M") & (moveMode != "V"):
-                    print("Invalid Option, only <M> and <V>")
-                    moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
-                if moveMode == "M":
-                    multiplier = input("PAL CMD: Enter multiplier:")
-                    asset.resizeAssetMultiplier(int(multiplier))
-                else:
-                    newSizeX = input("PAL CMD: Enter size in X:")
-                    newSizeY = input("PAL CMD: Enter size in Y:")
-                    asset.resizeAsset(int(newSizeX), int(newSizeY))
-        elif var == "rotate asset":
-            astName = input("PAL CMD: Enter name of the asset:")
-            asset = framesArray[currentFrame].getAsset(astName)
-            if asset is None:
-                print("Asset can't be found")
-            else:
-                moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
-                while (moveMode != "R") & (moveMode != "A"):
-                    print("Invalid Option, only <R> and <A>")
-                    moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
-                if moveMode == "R":
-                    angle = input("PAL CMD: Enter angle:")
-                    asset.rotate(int(angle))
-                else:
-                    angle = input("PAL CMD: Enter angle:")
-                    asset.rotateAbs(int(angle))
-        elif var == "remove asset":
-            astName = input("PAL CMD: Enter name of the asset:")
-            asset = framesArray[currentFrame].getAsset(astName)
-            if asset is None:
-                print("Asset can't be found")
-            else:
-                framesArray[currentFrame].unloadAsset(asset)
-        elif var == "create sprite":
-            sprt = input("PAL CMD: Enter Sprite file name:")
-            sprtName = input("PAL CMD: Enter Sprite name:")
-            sprtWidth = input("PAL CMD: Enter Sprites width:")
-            sprtHeight = input("PAL CMD: Enter Sprite height:")
-            framesArray[currentFrame].addSprite(Sprite(sprtName, sprt, int(sprtWidth), int(sprtHeight)))
-        elif var == "change sprite state":
-            sprtName = input("PAL CMD: Enter name of the sprite:")
-            sprite = framesArray[currentFrame].getSprite(sprtName)
-            if sprite is not None:
-                index = input("PAL CMD: Enter index to change on sprite:")
-                if (int(index) < 0) or (len(sprite.spritesArray)-1 < int(index)):
-                    print("Invalid index")
-                else:
-                    print(len(sprite.spritesArray))
-                    sprite.changeSelectedSprite(int(index))
-            else:
-                print("Sprite can't be found")
-        elif var == "move sprite":
-            sprtName = input("PAL CMD: Enter name of the sprite:")
-            sprite = framesArray[currentFrame].getSprite(sprtName)
-            if sprite is None:
-                print("Sprite can't be found")
-            else:
-                moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
-                while (moveMode != "R") & (moveMode != "A"):
-                    print("Invalid Option, only <R> and <A>")
-                    moveMode = input("PAL CMD: Relative position <R>  or absolute <A>")
-                if moveMode == "R":
-                    sprtDeltaX = input("PAL CMD: Enter delta X:")
-                    sprtDeltaY = input("PAL CMD: Enter delta Y:")
-                    sprite.move(int(sprtDeltaX), int(sprtDeltaY))
-                else:
-                    sprtAbsX = input("PAL CMD: Enter absolute X:")
-                    sprtAbsY = input("PAL CMD: Enter absolute Y:")
-                    sprite.moveAbs(int(sprtAbsX), int(sprtAbsY))
-        elif var == "resize sprite":
-            sprtName = input("PAL CMD: Enter name of the sprite:")
-            sprite = framesArray[currentFrame].getSprite(sprtName)
-            if sprite is None:
-                print("Sprite can't be found")
-            else:
-                multiplier = input("PAL CMD: Enter multiplier:")
-                sprite.resizeSpriteMultiplier(int(multiplier))
-        elif var == "rotate sprite":
-            astName = input("PAL CMD: Enter name of the sprite:")
-            sprite = framesArray[currentFrame].getSprite(astName)
-            if sprite is None:
-                print("Asset can't be found")
-            else:
-                moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
-                while (moveMode != "R") & (moveMode != "A"):
-                    print("Invalid Option, only <R> and <A>")
-                    moveMode = input("PAL CMD: Relative rotation <R>  or absolute <A>")
-                if moveMode == "R":
-                    angle = input("PAL CMD: Enter angle:")
-                    sprite.rotate(int(angle))
-                else:
-                    angle = input("PAL CMD: Enter angle:")
-                    sprite.rotateAbs(int(angle))
-        elif var == "remove sprite":
-            sprtName = input("PAL CMD: Enter name of the sprite:")
-            sprite = framesArray[currentFrame].getSprite(sprtName)
-            if sprite is None:
-                print("Asset can't be found")
-            else:
-                framesArray[currentFrame].unloadSprite(sprite)
-        elif var == "save":
-            frameTime = input("PAL CMD: Enter time in seconds between frames:")
-            save(float(frameTime))
-        else:
-            print("Invalid command")
