@@ -24,6 +24,7 @@ class App(tk.Frame):
         self.currentFrame = 0
         self.loadFrame(0)
 
+    # uses the current frame to add the canvas to the tkinter frame
     def loadFrame(self, index):
         self.currentFrame = index
         self.canvasView = self.frames[index].getCanvas(self.parent)
@@ -46,6 +47,7 @@ class Frame:
         self.height = height
         self.canvas = None
 
+    # prepares the canvas for use, adds the background, assets and sprites
     def getCanvas(self, parent):
         self.canvas = tk.Canvas(parent, height=self.height, width=self.width, bg="black",
                                 highlightthickness=0, relief='ridge')
@@ -54,6 +56,7 @@ class Frame:
         self.loadAssets()
         return self.canvas
 
+    # saves the canvas area as an image to a file
     def save(self, filename):
         x = self.canvas.winfo_rootx() + self.canvas.winfo_x()
         y = self.canvas.winfo_rooty() + self.canvas.winfo_y()
@@ -61,13 +64,14 @@ class Frame:
         y1 = y + self.canvas.winfo_height()
         box = (x, y, x1, y1)
         # os.system("screencapture -R"+str(x)+str(y)+str(x1)+str(y1) + filename + ".jpg")
-        ImageGrab.grab(bbox=box).save(filename+".jpg", format="JPEG")
-        return filename+".jpg"
+        ImageGrab.grab(bbox=box).save(filename + ".jpg", format="JPEG")
+        return filename + ".jpg"
 
     def addAsset(self, asset):
         self.assetsLoaded = self.assetsLoaded + 1
         self.assets.append(asset)
 
+    # prepares and loads the assets added to the frame
     def loadAssets(self):
         for asset in self.assets:
             asset.setPhoto(ImageTk.PhotoImage(asset.image, name=asset.name))
@@ -80,6 +84,7 @@ class Frame:
         self.spritesLoaded = self.spritesLoaded + 1
         self.sprites.append(sprite)
 
+    # prepares and loads the sprites added to the frane
     def loadSprites(self):
         for sprite in self.sprites:
             sprite.setPhoto(ImageTk.PhotoImage(sprite.getCurrentSprite(), name=sprite.name))
@@ -89,17 +94,19 @@ class Frame:
     def setBackground(self, background):
         self.background = Asset(str(background), "background")
         self.background2 = Asset(str(background), "background2")
-        self.background2.move(-self.background2.centerX*2, -self.background2.centerY*2)
+        self.background2.move(-self.background2.centerX * 2, -self.background2.centerY * 2)
 
+    # moves the background and uses a second image to make it repeat seamlessly
     def moveBackground(self, deltaX):
         self.background.move(deltaX, 0)
         if self.background.posX > 0:
             self.background2.moveAbs(0, 0)
-            self.background2.move(self.background.posX-self.background2.centerX*2, 0)
-        elif self.background.posX+self.background.centerX*2 < self.width:
+            self.background2.move(self.background.posX - self.background2.centerX * 2, 0)
+        elif self.background.posX + self.background.centerX * 2 < self.width:
             self.background2.moveAbs(0, 0)
-            self.background2.move(self.background.posX+self.background.centerX*2, 0)
-        if (self.background.posX <= -self.background.centerX*2) or (self.background.posX >= self.background.centerX*2):
+            self.background2.move(self.background.posX + self.background.centerX * 2, 0)
+        if (self.background.posX <= -self.background.centerX * 2) or (
+                self.background.posX >= self.background.centerX * 2):
             self.background, self.background2 = self.background2, self.background
             if self.background.posX > 0:
                 self.background2.moveAbs(0, 0)
@@ -117,15 +124,17 @@ class Frame:
         if self.background2 is not None:
             self.background2.setPhoto(ImageTk.PhotoImage(self.background2.image))
             self.background2.setIdentifier(self.canvas.create_image(self.background2.posX, self.background2.posY,
-                                                                   image=self.background2.photo,
-                                                                   anchor='nw'))
+                                                                    image=self.background2.photo,
+                                                                    anchor='nw'))
 
+    # removes the asset form the frame
     def unloadAsset(self, asset):
         try:
             self.assets.remove(asset)
         except:
             print("Asset not loaded:", asset)
 
+    # removes the sprite form the frame
     def unloadSprite(self, sprite):
         try:
             self.sprites.remove(sprite)
@@ -147,54 +156,6 @@ class Frame:
                 sprite = s
                 break
         return sprite
-
-    def moveAsset(self, assetName, deltaX, deltaY):
-        for a in self.assets:
-            if (a.name == assetName):
-                a.move(deltaX, deltaY)
-                break
-
-    def moveAssetAbs(self, assetName, deltaX, deltaY):
-        for a in self.assets:
-            if a.name == assetName:
-                a.moveAbs(deltaX, deltaY)
-                break
-
-    def resizeAssetMultiplier(self, assetName, multiplier):
-        for a in self.assets:
-            if (a.name == assetName):
-                a.resizeAssetMultiplier(multiplier)
-                break
-
-    def resizeAsset(self, assetName, newSizeX, newSizeY):
-        for a in self.assets:
-            if (a.name == assetName):
-                a.resizeAsset(newSizeX, newSizeY)
-                break
-
-    def moveSprite(self, spriteName, deltaX, deltaY):
-        for s in self.sprites:
-            if (s.name == spriteName):
-                s.move(deltaX, deltaY)
-                break
-
-    def moveSpriteAbs(self, spriteName, deltaX, deltaY):
-        for s in self.sprites:
-            if s.name == spriteName:
-                s.moveAbs(deltaX, deltaY)
-                break
-
-    def resizeSpriteMultiplier(self, spriteName, multiplier):
-        for s in framesArray[currentFrame].sprites:
-            if s.name == spriteName:
-                s.resizeSpriteMultiplier(multiplier)
-                break
-
-    def changeSpriteState(self, spriteName, index):
-        for s in framesArray[currentFrame].sprites:
-            if s.name == spriteName:
-                s.changeSelectedSprite(index)
-                break
 
     def __deepcopy__(self, memodict={}):
         newFrame = Frame(deepcopy(self.width), deepcopy(self.height))
@@ -222,6 +183,7 @@ class Asset:
         self.angle = 0
         self.load(fileName)
 
+    # properly loads the passed filename to an asset
     def load(self, fileName):
         if isinstance(fileName, str):
             try:
@@ -251,7 +213,7 @@ class Asset:
         self.posY = absY
 
     def rotate(self, angle):
-        self.angle = self.angle+angle
+        self.angle = self.angle + angle
         self.image = self.image.rotate(angle, expand=True, center=(self.centerX, self.centerY))
 
     def rotateAbs(self, angle):
@@ -259,18 +221,13 @@ class Asset:
         self.image = self.image.rotate(angle, expand=True, center=(self.centerX, self.centerY))
         self.angle = angle
 
-
-    def unload(self):
-        global assetArray
-        assetArray.remove(self)
-        self.image = None
-
     def setIdentifier(self, id):
         self.canvasID = id
 
     def setPhoto(self, photo):
         self.photo = photo
 
+    # creates a deepcopy of the asset, creating a new asset object
     def __deepcopy__(self, memodict={}):
         newAsset = Asset(self.filename, deepcopy(self.name))
         newAsset.posX = deepcopy(self.posX)
@@ -299,6 +256,7 @@ class Sprite:
         self.angle = 0
         self.createSprites()
 
+    # loads the passed file and divides it into the sprite states
     def createSprites(self):
         if isinstance(self.fileName, str):
             try:
@@ -332,7 +290,7 @@ class Sprite:
         self.multiplier = multiplier
 
     def rotate(self, angle):
-        self.angle = self.angle+angle
+        self.angle = self.angle + angle
 
     def rotateAbs(self, angle):
         self.angle = angle
@@ -343,21 +301,18 @@ class Sprite:
     def setIdentifier(self, id):
         self.canvasID = id
 
-    def unload(self):
-        global spritesArray
-        spritesArray.remove(self)
-        self.image = None
-
+    # method used for getting the current sprites states, with proper resizing and rotation
     def getCurrentSprite(self):
         tempImage = self.spritesArray[self.selectedSprite]
         tempImage = tempImage.resize((self.multiplier * tempImage.size[0],
                                       self.multiplier * tempImage.size[1]),
                                      Image.ANTIALIAS)
-        return tempImage.rotate(self.angle, expand=True, center=(tempImage.size[0]//2, tempImage.size[1]//2))
+        return tempImage.rotate(self.angle, expand=True, center=(tempImage.size[0] // 2, tempImage.size[1] // 2))
 
     def changeSelectedSprite(self, index):
         self.selectedSprite = index
 
+    # creates a deepcopy of the sprite, creating a new sprite object
     def __deepcopy__(self, memodict={}):
         newSprite = Sprite(deepcopy(self.name), deepcopy(self.fileName),
                            deepcopy(self.spriteWidth), deepcopy(self.spriteHeight))
@@ -368,7 +323,7 @@ class Sprite:
         newSprite.angle = deepcopy(self.angle)
         return newSprite
 
-
+# creates and displays the tkinter frame with the current frame and canvas
 def makeCanvas():
     root = tk.Tk()
     root.title('PAL-Project')
@@ -384,8 +339,10 @@ def makeCanvas():
     app.mainloop()
 
 
+# displays the tkinter frame long enough to save all the frames to files
 def save(frameTime):
     count = 0
+
     for frame in framesArray:
         root = tk.Tk()
         root.title('PAL-Project')
@@ -394,21 +351,23 @@ def save(frameTime):
         app = App(root, framesArray[count])
         app.pack()
         app.update_idletasks()
-        root.after(100, lambda: root.destroy())
-        root.after(50, saveFrameImage(frame, count))
+        root.lift()
+        root.attributes('-topmost', True)
+        root.after(500, lambda: saveFrameImage(frame, count))
+        root.after(1000, lambda: root.destroy())
 
         app.mainloop()
         count = count + 1
 
-    for x in range(0,count):
-        frameImages.append(imageio.imread("frame"+str(x)+".jpg"))
+    for x in range(0, count):
+        frameImages.append(imageio.imread("frame" + str(x) + ".jpg"))
     imageio.mimsave('animation.gif', frameImages, duration=frameTime)
 
 
 def saveFrameImage(frame, count):
     _thread.start_new(frame.save, ("frame" + str(count),))
 
-
+# creates a new frame after the last one, with the same background, sprites and assets as the current one
 def createFrame():
     global currentFrame
     if currentFrame != -1:
@@ -416,5 +375,3 @@ def createFrame():
     else:
         framesArray.append(Frame(animationWidth, animationHeight))
     currentFrame = currentFrame + 1
-
-
