@@ -45,8 +45,8 @@ def p_changeFrame(p):
         if (int(p[3]) < 0) or (len(pal.framesArray) - 1 < int(p[3])):
             p[0] = 'Invalid index'
         else:
-            pal.frameIndex = int(p[3])
-            p[0] = 'Frame created with index ', pal.currentFrame
+            pal.currentFrame = int(p[3])
+            p[0] = 'Frame changed to frame in index ', pal.currentFrame
 
 
 def p_SetBackground(p):
@@ -87,8 +87,10 @@ def p_MoveAsset(p):
                 p[0] = 'Invalid Option, only <R> and <A>'
             elif moveMode == "R":
                 asset.move(p[6], p[8])
+                p[0] = 'asset moved'
             else:
                 asset.moveAbs(p[6], p[8])
+                p[0] = 'asset moved'
 
 
 def p_ResizeAssetAbsolute(p):
@@ -98,7 +100,8 @@ def p_ResizeAssetAbsolute(p):
         if asset is None:
             p[0] = 'Asset cant be found'
         else:
-            asset.resizeAsset(p[5], p[7])
+            asset.resizeAsset(int(p[5]), int(p[7]))
+            p[0] = 'asset resized'
 
 
 def p_ResizeAssetMultiplier(p):
@@ -108,7 +111,8 @@ def p_ResizeAssetMultiplier(p):
         if asset is None:
             p[0] = 'Asset cant be found'
         else:
-            asset.resizeAssetMultiplier(p[5])
+            asset.resizeAssetMultiplier(int(p[5]))
+            p[0] = 'asset resized'
 
 
 def p_RotateAssetRelative(p):
@@ -118,7 +122,8 @@ def p_RotateAssetRelative(p):
         if asset is None:
             p[0] = 'Asset cant be found'
         else:
-            asset.rotate(p[5])
+            asset.rotate(int(p[5]))
+            p[0] = 'asset rotated'
 
 
 def p_RotateAssetAbsolute(p):
@@ -128,7 +133,8 @@ def p_RotateAssetAbsolute(p):
         if asset is None:
             p[0] = 'Asset cant be found'
         else:
-            asset.rotateAbs(p[5])
+            asset.rotateAbs(int(p[5]))
+            p[0] = 'Sprite rotated'
 
 
 def p_removeAsset(p):
@@ -139,6 +145,7 @@ def p_removeAsset(p):
             p[0] = 'Asset cant be found'
         else:
             pal.framesArray[pal.currentFrame].unloadAsset(asset)
+            p[0] = 'asset removed'
 
 
 # ---------- SPRITES ----------
@@ -147,7 +154,7 @@ def p_CreateSprite(p):
     'expression : CREATESPRITE PAREN_L IDENTIFIER COMMA IDENTIFIER PERIOD IDENTIFIER COMMA NUMBER COMMA NUMBER PAREN_R'
     if checkInit(p):
         pal.framesArray[pal.currentFrame].addSprite(pal.Sprite(p[3], p[5] + p[6] + p[7], p[9], p[11]))
-        p[0] = 'Sprite Created with name '
+        p[0] = 'Sprite Created with name ', p[3]
 
 
 def p_ChangeSpriteState(p):
@@ -159,6 +166,7 @@ def p_ChangeSpriteState(p):
                 p[0] = "Invalid index"
             else:
                 sprite.changeSelectedSprite(int(p[4]))
+                p[0] = "Sprite state changed"
         else:
             p[0] = "Sprite can't be found"
 
@@ -174,8 +182,10 @@ def p_MoveSprite(p):
                 p[0] = 'Invalid Option, only <R> and <A>'
             elif p[4] == "R":
                 sprite.move(p[6], p[8])
+                p[0] = 'Sprite moved'
             else:
                 sprite.moveAbs(p[6], p[8])
+                p[0] = 'Sprite moved'
 
 
 def p_ResizeSpriteAbsolute(p):
@@ -186,6 +196,7 @@ def p_ResizeSpriteAbsolute(p):
             p[0] = 'Sprite cant be found'
         else:
             sprite.resizeAsset(p[5], p[7])
+            p[0] = 'Sprite resized'
 
 
 def p_ResizeSpriteMultiplier(p):
@@ -196,6 +207,7 @@ def p_ResizeSpriteMultiplier(p):
             p[0] = 'Sprite cant be found'
         else:
             sprite.resizeAssetMultiplier(p[5])
+            p[0] = 'Sprite resized'
 
 
 def p_RotateSpriteRelative(p):
@@ -205,7 +217,8 @@ def p_RotateSpriteRelative(p):
         if sprite is None:
             p[0] = 'Asset cant be found'
         else:
-            sprite.rotate(p[5])
+            sprite.rotate(int(p[5]))
+            p[0] = 'Sprite rotated'
 
 
 def p_RotateSpriteAbsolute(p):
@@ -215,7 +228,8 @@ def p_RotateSpriteAbsolute(p):
         if sprite is None:
             p[0] = 'Asset cant be found'
         else:
-            sprite.rotateAbs(p[5])
+            sprite.rotateAbs(int(p[5]))
+            p[0] = 'Sprite rotated'
 
 
 def p_removeSprite(p):
@@ -226,6 +240,7 @@ def p_removeSprite(p):
             p[0] = 'Asset cant be found'
         else:
             pal.framesArray[pal.currentFrame].unloadSprite(sprite)
+            p[0] = 'Sprite removed'
 
 
 def p_CreateAnimation(p):
