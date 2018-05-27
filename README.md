@@ -27,6 +27,23 @@ During the technology era, we have seen a new way to see the media. From drawing
 
 
 
+#### Language Functions and Commands
+
+- init(width, height) - It initialize the animation with the given width and height passed as parameters.
+- show - It displays a preview of the current frame with all its content.
+- setBackground(image.jpg) - Sets the background of the frame to the image passed as a parameter.
+- createSprite(spriteName, fileName, width, height) - Creates a sprite with the given name and dimensions.
+- spriteName moveSprite(R, moveX, moveY) - Moves the sprite relative to it’s position.
+- createAsset(assetName, assetImage.png) - Creates an image to add to the frame with the given name.
+- assetName resizeAsset absolute(width, height) - Resizes the given asset with the specified dimensions.
+- assetName moveAsset(A, moveX, moveY) - Moves the given asset to the specified location in the frame.
+- createFrame - Creates a frame that looks exactly the same as the one already created, just to facilitate the flow and development of    the animation.
+- moveBackground(moveX) - Moves the background according to the number passed as a parameter.
+- changeFrame(index) - Change the frame to the one specified by the index given as a parameter.
+- createAnimation(displayTime) - Creates an animation with each of the frames in the order they are created. Each frame will be showed by the time passed as a parameter which are in seconds.
+
+
+
 #### TEAM
 - Jonathan Santiago González
 - Adahid Galan Rivera
