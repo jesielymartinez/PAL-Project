@@ -1,11 +1,11 @@
 # PAL-Project
 
-#### MOTIVATION
+### MOTIVATION
 During the technology era, we have seen a new way to see the media. From drawings digitized, movies, series, clips, live streaming, GIF, etc. We as a group thought that a good way to continue those trends came in one idea: Programing Animation Language (PAL). This programming language is intended to create animations and then export them as a video clip or GIF. Our goal is to create a variety of tools geared for various scenarios, characters, and storylines that the user can create and choose for their pleasure. It is a new way to express your creativity with something simple and fun. One of the main purposes of our project is to improve the world of short animations, making it easier and accessible to create, so that even children can use their imagination to bring their ideas to life with animations. This is done by simplifying the process, not requiring advanced skills in programming and graphic design.
 
 
 
-#### VIDEO TUTORIAL
+### VIDEO TUTORIAL
 
 - Tap the image to view a simple tutorial to start using PAL
 
@@ -13,7 +13,7 @@ During the technology era, we have seen a new way to see the media. From drawing
 
 
 
-#### LANGUAGE FEATURES
+### LANGUAGE FEATURES
 - Easy sintax.
 - Manipulation of images and sprites by rotation, movement and changing the size of these.
 - Manipulation of the background by means of movement and automatic repetition of it.
@@ -22,12 +22,12 @@ During the technology era, we have seen a new way to see the media. From drawing
 
 
 
-#### APPROACH
+### APPROACH
 ---> Text here
 
 
 
-#### Language Functions and Commands
+### Language Functions and Commands
 
 - init(width, height) - It initialize the animation with the given width and height passed as parameters.
 - show - It displays a preview of the current frame with all its content.
@@ -44,7 +44,7 @@ During the technology era, we have seen a new way to see the media. From drawing
 
 
 
-#### TEAM
+### TEAM
 - Jonathan Santiago González
 - Adahid Galan Rivera
 - Jesiely Martínez Rodríguez
