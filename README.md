@@ -23,7 +23,13 @@ During the technology era, we have seen a new way to see the media. From drawing
 
 
 ### APPROACH
----> Text here
+PAL uses the modules lexer.py and PAL_parser.py. PAL_parser is the main module that runs the application. It contains the main methods of the application. User input is parsed by yacc using the PLY library. These functions define grammar characteristics of the language. The yacc parser must match the functions found in PAL_parser module with the command entered by the user, considering the tokens defined in the lexer file for PAL. The tokens form the regular expression that will be matched and the execute the command. 
+PAL uses the following libraries:
+Imageio: Imageio is a Python library that provides an easy interface to read and write a wide range of image data, including animated images, video, volumetric data, and scientific formats. It is cross-platform, runs on Python 2.7 and 3.4+, and is easy to install. We will be using this library for exporting the finished animation.
+PLY: also referred as Python Lex- Yacc, is a parsing tool written in Python and implements the Lex parsing tool. This tool s divided in both stages, the lexical analyzer( lex) is the one responsible that all the syntax what the user writes follows the rules specified by the Developers. The second one is yac, practically yac is the one that parses de code.
+Tkinter: Tkinter is Python's de-facto standard GUI (Graphical User Interface) package, used in pal module to provide the graphics needed. 
+PIL: The Python Imaging Library by Fredrik Lundh and Contributors.
+_Thread: The thread module provides a basic synchronization data structure called a lock object The synchronization primitives go hand in hand with thread management.
 
 
 
